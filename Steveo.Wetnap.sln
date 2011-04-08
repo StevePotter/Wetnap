@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Steveo.Wetnap", "Library\Steveo.Wetnap.csproj", "{B113EE4F-C71A-41C4-8229-77AB7CA0C0B3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Steveo.Wetnap.Tests", "Steveo.Wetnap.Tests\Steveo.Wetnap.Tests.csproj", "{9B3C8B78-FE1A-49A7-9CA0-2051A302727F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A3CBB0BF-2B1D-4F63-80C6-3E95A414A8DA}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		Steveo.Wetnap.vsmdi = Steveo.Wetnap.vsmdi
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Steveo.Wetnap.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B113EE4F-C71A-41C4-8229-77AB7CA0C0B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B113EE4F-C71A-41C4-8229-77AB7CA0C0B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B113EE4F-C71A-41C4-8229-77AB7CA0C0B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B113EE4F-C71A-41C4-8229-77AB7CA0C0B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B3C8B78-FE1A-49A7-9CA0-2051A302727F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B3C8B78-FE1A-49A7-9CA0-2051A302727F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B3C8B78-FE1A-49A7-9CA0-2051A302727F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B3C8B78-FE1A-49A7-9CA0-2051A302727F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

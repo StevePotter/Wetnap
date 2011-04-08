@@ -1,0 +1,5 @@
+D:\Documents\My Dropbox\Dev Projects\Wetnap\Library\obj\Debug\ResolveAssemblyReference.cache
+D:\Documents\My Dropbox\Dev Projects\Wetnap\Library\bin\Debug\Steveo.Wetnap.dll
+D:\Documents\My Dropbox\Dev Projects\Wetnap\Library\bin\Debug\Steveo.Wetnap.pdb
+D:\Documents\My Dropbox\Dev Projects\Wetnap\Library\obj\Debug\Steveo.Wetnap.dll
+D:\Documents\My Dropbox\Dev Projects\Wetnap\Library\obj\Debug\Steveo.Wetnap.pdb

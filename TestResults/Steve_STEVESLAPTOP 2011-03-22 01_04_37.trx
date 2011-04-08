@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<TestRun id="22a828f5-73eb-4710-9e4e-549339590ef7" name="Steve@STEVESLAPTOP 2011-03-22 01:04:37" runUser="STEVESLAPTOP\Steve" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <TestSettings name="Local" id="4f61bc2a-6065-40f1-92ca-65e55b5b23a6">
+    <Description>These are default test settings for a local test run.</Description>
+    <Deployment enabled="false" runDeploymentRoot="Steve_STEVESLAPTOP 2011-03-22 01_04_37">
+      <DeploymentItem filename="D:\Documents\My Dropbox\Dev Projects\Wetnap\Library\bin\Debug\Steveo.Wetnap.dll" />
+    </Deployment>
+    <Execution>
+      <TestTypeSpecific />
+      <AgentRule name="Execution Agents">
+      </AgentRule>
+    </Execution>
+  </TestSettings>
+  <Times creation="2011-03-22T01:04:37.4195048-04:00" queuing="2011-03-22T01:04:37.4905089-04:00" start="2011-03-22T01:04:37.5765138-04:00" finish="2011-03-22T01:04:38.1255452-04:00" />
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" error="0" failed="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+  <TestDefinitions>
+    <UnitTest name="TestMethod1" storage="d:\documents\my dropbox\dev projects\wetnap\steveo.wetnap.tests\bin\debug\steveo.wetnap.tests.dll" id="36442a55-b2ab-ccba-0fd7-0face64d7152">
+      <Execution id="bd056341-5a65-42bd-a3c1-6f8779787c07" />
+      <TestMethod codeBase="D:/Documents/My Dropbox/Dev Projects/Wetnap/Steveo.Wetnap.Tests/bin/Debug/Steveo.Wetnap.Tests.DLL" adapterTypeName="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestAdapter, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.Adapter, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" className="Steveo.Wetnap.Tests.UnitTest1, Steveo.Wetnap.Tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" name="TestMethod1" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <TestEntries>
+    <TestEntry testId="36442a55-b2ab-ccba-0fd7-0face64d7152" executionId="bd056341-5a65-42bd-a3c1-6f8779787c07" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <Results>
+    <UnitTestResult executionId="bd056341-5a65-42bd-a3c1-6f8779787c07" testId="36442a55-b2ab-ccba-0fd7-0face64d7152" testName="TestMethod1" computerName="STEVESLAPTOP" duration="00:00:00.0247485" startTime="2011-03-22T01:04:37.6285168-04:00" endTime="2011-03-22T01:04:38.0985437-04:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bd056341-5a65-42bd-a3c1-6f8779787c07">
+    </UnitTestResult>
+  </Results>
+</TestRun>
