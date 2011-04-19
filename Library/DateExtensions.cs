@@ -41,7 +41,7 @@ namespace System
         /// <param name="value"></param>
         /// <param name="format"></param>
         /// <returns></returns>
-        public static string ToFormattedString(this DateTime value, DateTimeFormat format)
+        public static string ToString(this DateTime value, DateTimeFormat format)
         {
             var culture = System.Threading.Thread.CurrentThread.CurrentCulture;
             var formatter = culture.DateTimeFormat;

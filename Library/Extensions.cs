@@ -306,6 +306,7 @@ namespace System
                 return mapIfHasValue(value);
         }
 
+
         /// <summary>
         /// A helper to save some code when dealing with nullable valuess
         /// </summary>

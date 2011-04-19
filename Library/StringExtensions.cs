@@ -17,14 +17,24 @@ namespace System
     {
 
         /// <summary>
-        /// Whether the value is not null and has at least one non-whitespace one character.
+        /// Whether the value is not null and has at least one character (whitespace or not).
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
         public static bool HasChars(this string value)
         {
-            return !string.IsNullOrEmpty(value);
+            return value.HasChars(true);
         }
+
+
+        /// <summary>
+        /// Whether the value is not null and has at least one character, with an option to disregard whitespace.
+        /// </summary>
+        public static bool HasChars(this string value, bool whitespaceCounts)
+        {
+            return whitespaceCounts ? !string.IsNullOrEmpty(value) : !IsNullOrWhiteSpace(value);
+        }
+
 
         /// <summary>
         /// Just a shortcut for the awkward string.IsNullOrEmpty static method.
