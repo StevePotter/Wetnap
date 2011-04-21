@@ -1,7 +1,0 @@
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\bin\Debug\Steveo.Wetnap.Tests.dll
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\bin\Debug\Steveo.Wetnap.Tests.pdb
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\bin\Debug\Steveo.Wetnap.dll
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\bin\Debug\Steveo.Wetnap.pdb
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\obj\Debug\ResolveAssemblyReference.cache
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\obj\Debug\Steveo.Wetnap.Tests.dll
-D:\Documents\My Dropbox\Dev Projects\Wetnap\Steveo.Wetnap.Tests\obj\Debug\Steveo.Wetnap.Tests.pdb

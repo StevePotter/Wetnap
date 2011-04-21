@@ -1,5 +1,0 @@
-D:\Documents\My Dropbox\Dev Projects\Wetnap\bin\Debug\Mediascend.Wetnap.dll
-D:\Documents\My Dropbox\Dev Projects\Wetnap\bin\Debug\Mediascend.Wetnap.pdb
-D:\Documents\My Dropbox\Dev Projects\Wetnap\obj\Debug\ResolveAssemblyReference.cache
-D:\Documents\My Dropbox\Dev Projects\Wetnap\obj\Debug\Mediascend.Wetnap.dll
-D:\Documents\My Dropbox\Dev Projects\Wetnap\obj\Debug\Mediascend.Wetnap.pdb
