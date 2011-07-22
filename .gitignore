@@ -1,1 +1,8 @@
-main.o
+[Oo]bj/
+[Bb]in/
+*.suo
+*.user
+/TestResults
+/nuget
+*.vspscc
+*.vssscc

@@ -30,9 +30,10 @@ namespace System
         /// <summary>
         /// Whether the value is not null and has at least one character, with an option to disregard whitespace.
         /// </summary>
-        public static bool HasChars(this string value, bool whitespaceCounts)
+        /// <param name="countWhitespaceAsChars">When true, the method will return true even if there are only whitespace characters.  If false and the string is only whitespace, the method will return false.</param>
+        public static bool HasChars(this string value, bool countWhitespaceAsChars)
         {
-            return whitespaceCounts ? !string.IsNullOrEmpty(value) : !IsNullOrWhiteSpace(value);
+            return countWhitespaceAsChars ? !string.IsNullOrEmpty(value) : !IsNullOrWhiteSpace(value);
         }
 
 
@@ -202,14 +203,44 @@ namespace System
         /// <returns></returns>
         public static string After(this string value, string match, StringComparison comparison)
         {
-            if (value == null)
-                return null;
-            var index = value.IndexOf(match, 0, comparison);
-            if (index >= 0)
+            return After(value, match, 1, false, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring of source that comes after an occurance of the match string.
+        /// </summary>
+        /// <param name="source">The string whose substring will be returned.</param>
+        /// <param name="match">The string to find within the source string.</param>
+        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  <= 0 indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="comparison">The type of comparison when searching through files.</param>
+        /// <returns></returns>
+        public static string After(this string source, string match, int matchOccurance, bool prependMatch, StringComparison comparison)
+        {
+            if (source == null)
             {
-                return value.Substring(index + match.Length);
+                return null;
             }
-            return null;
+            //nothing to match so just return the source string.
+            if (!match.HasChars())
+            {
+                return source;
+            }
+            int index = int.MinValue;
+            //check for last occurance
+            if (matchOccurance <= 0)
+            {
+                index = source.LastIndexOf(match, comparison);
+                if (index < 0)
+                    return null;
+                return prependMatch ? source.Substring(index) : source.Substring(index + match.Length);
+            }
+            for (var i = 0; i < matchOccurance; i++)
+            {
+                index = source.IndexOf(match, i == 0 ? 0 : index + match.Length, comparison);
+                if (index < 0)
+                    return null;
+            }
+            return prependMatch ? source.Substring(index) : source.Substring(index + match.Length);
         }
 
         public static string AfterLast(this string value, string match)
@@ -226,14 +257,7 @@ namespace System
         /// <returns></returns>
         public static string AfterLast(this string value, string match, StringComparison comparison)
         {
-            if (value == null)
-                return null;
-            var index = value.LastIndexOf(match, comparison);
-            if (index >= 0)
-            {
-                return value.Substring(index + match.Length);
-            }
-            return null;
+            return After(value, match, 0, false, comparison);
         }
 
         /// <summary>
@@ -257,14 +281,7 @@ namespace System
         /// <remarks>A good opposite to this could be Until, although that's not right (Up to and including...find a one word answer for that)</remarks>
         public static string From(this string value, string match, StringComparison comparison)
         {
-            if (value == null)
-                return null;
-            var index = value.IndexOf(match, 0, comparison);
-            if (index >= 0)
-            {
-                return value.Substring(index);
-            }
-            return null;
+            return After(value, match, 1, true, comparison);
         }
 
 
@@ -285,11 +302,70 @@ namespace System
             return false;
         }
 
+
+        /// <summary>
+        /// Removes everything that is not in the filter text from the input.
+        /// </summary>
+        /// <param name="input">Input text</param>
+        /// <param name="regexToKeep">Regex expression of text to keep</param>
+        /// <returns>This string minus everything not in the filter text.</returns>
+        /// <remarks>Thanks to http://cul.codeplex.com</remarks>
+        public static string Filter(this string input, string regexToKeep)
+        {
+            if (input.HasNoChars())
+                return input;
+            if (regexToKeep.HasNoChars())
+                return string.Empty;
+
+            return Filter(input, new Regex(regexToKeep));
+        }
+
+        /// <summary>
+        /// Removes everything that is not in the filter text from the input.
+        /// </summary>
+        /// <param name="input">Input text</param>
+        /// <param name="regexToKeep">Regex expression of text to keep</param>
+        /// <returns>This string minus everything not in the filter text.</returns>
+        /// <remarks>Thanks to http://cul.codeplex.com</remarks>
+        public static string Filter(this string input, Regex regexToKeep)
+        {
+            if (input.HasNoChars())
+                return input;
+
+            return string.Join(string.Empty, regexToKeep.Matches(input).Cast<Match>().Select(match => match.Value).ToArray());
+        }
+
+
+        /// <summary>
+        /// Keeps only alphanumeric characters (a-z, A-Z, 0-9)
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string FilterAlphaNumeric(this string input)
+        {
+            return input.Filter(alphaNumeric);
+        }
+        static Regex alphaNumeric = new Regex("[a-zA-Z0-9]");
+
+        /// <summary>
+        /// Keeps only alphanumeric characters (a-z, A-Z)
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string FilterAlpha(this string input)
+        {
+            return input.Filter(alpha);
+        }
+        static Regex alpha = new Regex("[a-zA-Z]");
+
+
+
         /// <summary>
         /// Removes every character from the string that is not a number.  so "4ms" will return "4" and "4 plus 1" returns "41".
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [Obsolete("Use FilterNumbers(false) instead")]
         public static string FilterDigits(this string value)
         {
             if (value == null)
@@ -297,6 +373,18 @@ namespace System
             return new string(value.ToCharArray().Where(o => Char.IsDigit(o)).ToArray());
         }
 
+        /// <summary>
+        /// Keeps only numeric characters, optionally including decimal points.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        /// <remarks>If there are multiple decimal points, they will be kept.</remarks>
+        public static string FilterNumbers(this string input, bool keepDecimal)
+        {
+            return input.Filter(keepDecimal ? numericDecimal : numericNoDecimal);
+        }
+        static Regex numericNoDecimal = new Regex("[0-9]");
+        static Regex numericDecimal = new Regex(@"[0-9\.]");
 
         /// <summary>
         /// Indicates whether the string contains the string provided.
@@ -515,7 +603,6 @@ namespace System
                 return value;
             return value.EndsWith(endsWith, comparisonType) ? value.RemoveFromEnd(endsWith.Length).EndWithout(endsWith, comparisonType) : value;
         }
-
 
 
         /// <summary>
