@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
-using System.Text;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace System
@@ -15,27 +12,69 @@ namespace System
     /// </summary>
     partial class WetnapExtensions
     {
+        private static readonly Regex alphaNumeric = new Regex("[a-zA-Z0-9]");
+        private static readonly Regex alpha = new Regex("[a-zA-Z]");
+        private static readonly Regex numericNoDecimal = new Regex("[0-9]");
+        private static readonly Regex numericDecimal = new Regex(@"[0-9\.]");
 
         /// <summary>
-        /// Whether the value is not null and has at least one character (whitespace or not).
+        /// Whether the value is not null and has at least one character.  It's the exact same thing as writing the clunky !string.IsNullOrEmpty(value).
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
         public static bool HasChars(this string value)
         {
-            return value.HasChars(true);
+            return value.HasChars(CharsThatMatter.Any);
         }
-
 
         /// <summary>
         /// Whether the value is not null and has at least one character, with an option to disregard whitespace.
         /// </summary>
         /// <param name="countWhitespaceAsChars">When true, the method will return true even if there are only whitespace characters.  If false and the string is only whitespace, the method will return false.</param>
+        [Obsolete("Use HasChars(CharsToCount) instead.")]
         public static bool HasChars(this string value, bool countWhitespaceAsChars)
         {
-            return countWhitespaceAsChars ? !string.IsNullOrEmpty(value) : !IsNullOrWhiteSpace(value);
+            return HasChars(value, countWhitespaceAsChars ? CharsThatMatter.Any : CharsThatMatter.NonWhitespace);
         }
 
+        /// <summary>
+        /// Indicates whether the string has at least one character that satisfies the given condition.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="charMattersCondition"></param>
+        /// <returns></returns>
+        public static bool HasChars(this string value, CharsThatMatter charMattersCondition)
+        {
+            switch (charMattersCondition)
+            {
+                case CharsThatMatter.Any:
+                    return !string.IsNullOrEmpty(value);
+                case CharsThatMatter.NonWhitespace:
+                    return HasChars(value, c => !char.IsWhiteSpace(c));
+                case CharsThatMatter.Letters:
+                    return HasChars(value, char.IsLetter);
+                case CharsThatMatter.Digits:
+                    return HasChars(value, char.IsDigit);
+                case CharsThatMatter.LettersAndDigits:
+                    return HasChars(value, char.IsLetterOrDigit);
+                default:
+                    throw new InvalidEnumArgumentException("whatCounts");
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the string has at least one character that satisfies the given condition.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="charMattersCondition"></param>
+        /// <returns></returns>
+        public static bool HasChars(this string value, Predicate<char> charMattersCondition)
+        {
+            //if there are no characters at all we can safely return false
+            if (string.IsNullOrEmpty(value))
+                return false;
+            return value.Any(t => charMattersCondition(t));
+        }
 
         /// <summary>
         /// Just a shortcut for the awkward string.IsNullOrEmpty static method.
@@ -52,42 +91,23 @@ namespace System
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [Obsolete("Use \"blah\".HasChars(CharsThatMatter.NonWhitespace) instead")]
         public static bool HasNonWhitespace(this string value)
         {
-            return !IsNullOrWhiteSpace(value);
-        }
-
-        /// <summary>
-        /// From .net 4.0, so we can use that method without requiring 4.0.  
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        private static bool IsNullOrWhiteSpace(string value)
-        {
-            if (value != null && value.Length > 0)
-            {
-                for (int i = 0; i < value.Length; i++)
-                {
-                    if (!char.IsWhiteSpace(value[i]))
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
+            return HasChars(value, CharsThatMatter.NonWhitespace);
         }
 
         /// <summary>
         /// Just a shortcut for Equals(StringComparison.Ordinal).  Slightly shorter and neater.
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="toRemove"></param>
         /// <returns></returns>
+//todo: check this        [Obsolete("Normal string.Equals(string) does this anyway.  Whoops!")]
         public static bool EqualsExact(this string value, string match)
         {
             if (value == null)
                 return match == null;
-            else if (match == null)
+            if (match == null)
                 return false;
             return value.Equals(match, StringComparison.Ordinal);
         }
@@ -96,13 +116,12 @@ namespace System
         /// Just a shortcut for Equals(StringComparison.Ordinal).  Slightly shorter and neater.
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="toRemove"></param>
         /// <returns></returns>
         public static bool EqualsCaseInsensitive(this string value, string match)
         {
             if (value == null)
                 return match == null;
-            else if (match == null)
+            if (match == null)
                 return false;
             return value.Equals(match, StringComparison.OrdinalIgnoreCase);
         }
@@ -112,7 +131,6 @@ namespace System
         /// Indicates whether the string passed in is equal to any of the possible matches provided.
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="toRemove"></param>
         /// <returns></returns>
         public static bool EqualsAny(this string value, params string[] match)
         {
@@ -127,7 +145,7 @@ namespace System
         /// <returns></returns>
         public static bool EqualsAny(this string value, StringComparison comparison, params string[] match)
         {
-            foreach (var m in match)
+            foreach (string m in match)
             {
                 if (value.Equals(m, comparison))
                     return true;
@@ -212,9 +230,11 @@ namespace System
         /// <param name="source">The string whose substring will be returned.</param>
         /// <param name="match">The string to find within the source string.</param>
         /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  <= 0 indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="prependMatch">When true, the match will be prepended to the result.  The prepended value is taken from the original string, not the actual "match" property.  This matters when ignoring case.  Like "very good".After("VERY") with match prepended will return "very good".</param>
         /// <param name="comparison">The type of comparison when searching through files.</param>
         /// <returns></returns>
-        public static string After(this string source, string match, int matchOccurance, bool prependMatch, StringComparison comparison)
+        public static string After(this string source, string match, int matchOccurance, bool prependMatch,
+                                   StringComparison comparison)
         {
             if (source == null)
             {
@@ -225,7 +245,7 @@ namespace System
             {
                 return source;
             }
-            int index = int.MinValue;
+            var index = int.MinValue;
             //check for last occurance
             if (matchOccurance <= 0)
             {
@@ -290,16 +310,10 @@ namespace System
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [Obsolete("Use value.HasChars(Char.IsLetter) instead.")]
         public static bool HasLetters(this string value)
         {
-            if (value == null)
-                return false;
-            foreach (var currChar in value)
-            {
-                if (Char.IsLetter(currChar))
-                    return true;
-            }
-            return false;
+            return value.HasChars(Char.IsLetter);
         }
 
 
@@ -332,7 +346,8 @@ namespace System
             if (input.HasNoChars())
                 return input;
 
-            return string.Join(string.Empty, regexToKeep.Matches(input).Cast<Match>().Select(match => match.Value).ToArray());
+            return string.Join(string.Empty,
+                               regexToKeep.Matches(input).Cast<Match>().Select(match => match.Value).ToArray());
         }
 
 
@@ -345,7 +360,6 @@ namespace System
         {
             return input.Filter(alphaNumeric);
         }
-        static Regex alphaNumeric = new Regex("[a-zA-Z0-9]");
 
         /// <summary>
         /// Keeps only alphanumeric characters (a-z, A-Z)
@@ -356,8 +370,6 @@ namespace System
         {
             return input.Filter(alpha);
         }
-        static Regex alpha = new Regex("[a-zA-Z]");
-
 
 
         /// <summary>
@@ -383,8 +395,6 @@ namespace System
         {
             return input.Filter(keepDecimal ? numericDecimal : numericNoDecimal);
         }
-        static Regex numericNoDecimal = new Regex("[0-9]");
-        static Regex numericDecimal = new Regex(@"[0-9\.]");
 
         /// <summary>
         /// Indicates whether the string contains the string provided.
@@ -411,9 +421,9 @@ namespace System
             if (string.IsNullOrEmpty(value))
                 return false;
 
-            foreach (var match in matches)
+            foreach (string match in matches)
             {
-                var index = value.IndexOf(match, 0, comparison);
+                int index = value.IndexOf(match, 0, comparison);
                 if (index >= 0)
                 {
                     return true;
@@ -431,7 +441,7 @@ namespace System
         /// <remarks>Converting strings to integer happens so often that this function was deemed useful.</remarks>
         public static int ToInt(this string value)
         {
-            return System.Convert.ToInt32(value);
+            return Convert.ToInt32(value);
         }
 
         /// <summary>
@@ -455,7 +465,7 @@ namespace System
         {
             if (string.IsNullOrEmpty(value))
                 return value;
-            var firstChar = char.ToLower(value[0]);
+            char firstChar = char.ToLower(value[0]);
             return value.Length == 1 ? firstChar.ToString() : firstChar + value.Substring(1);
         }
 
@@ -486,7 +496,7 @@ namespace System
             if (charsToTake == 0)
                 return string.Empty;
 
-            var startIndex = Math.Max(value.Length - charsToTake, 0);
+            int startIndex = Math.Max(value.Length - charsToTake, 0);
             return value.Substring(startIndex);
         }
 
@@ -499,7 +509,7 @@ namespace System
         public static string RemoveFromEnd(this string value, int chars)
         {
             if (chars < 0)
-                throw new ArgumentOutOfRangeException("chars must be >= 0");
+                throw new ArgumentOutOfRangeException("value","chars must be >= 0");
             if (value == null)
                 return null;
 
@@ -552,7 +562,9 @@ namespace System
         {
             if (string.IsNullOrEmpty(value))
                 return value;
-            return value.StartsWith(startsWith, comparisonType) ? value.Substring(startsWith.Length).StartWithout(startsWith, comparisonType) : value;
+            return value.StartsWith(startsWith, comparisonType)
+                       ? value.Substring(startsWith.Length).StartWithout(startsWith, comparisonType)
+                       : value;
         }
 
 
@@ -601,7 +613,9 @@ namespace System
         {
             if (string.IsNullOrEmpty(value))
                 return value;
-            return value.EndsWith(endsWith, comparisonType) ? value.RemoveFromEnd(endsWith.Length).EndWithout(endsWith, comparisonType) : value;
+            return value.EndsWith(endsWith, comparisonType)
+                       ? value.RemoveFromEnd(endsWith.Length).EndWithout(endsWith, comparisonType)
+                       : value;
         }
 
 
@@ -644,7 +658,8 @@ namespace System
         /// </summary>
         /// <param name="endsWith"></param>
         /// <returns></returns>
-        public static string Surround(this string value, string startingWith, string endingWith, StringComparison comparisonType)
+        public static string Surround(this string value, string startingWith, string endingWith,
+                                      StringComparison comparisonType)
         {
             if (value == null)
                 return null;
@@ -687,7 +702,8 @@ namespace System
         /// </summary>
         /// <param name="endsWith"></param>
         /// <returns></returns>
-        public static string NotSurroundedBy(this string value, string notStartingWith, string notEndingWith, StringComparison comparisonType)
+        public static string NotSurroundedBy(this string value, string notStartingWith, string notEndingWith,
+                                             StringComparison comparisonType)
         {
             if (value == null)
                 return null;
@@ -699,7 +715,7 @@ namespace System
             return value.StartWithout(notStartingWith, comparisonType).EndWithout(notEndingWith, comparisonType);
         }
 
-        
+
         /// <summary>
         /// Adds a certain number of spaces to each line in the string.
         /// </summary>
@@ -708,7 +724,7 @@ namespace System
         /// <returns></returns>
         public static string Indent(this string value, int spaces = 4)
         {
-            var indent = "".PadLeft(spaces, ' ');
+            string indent = "".PadLeft(spaces, ' ');
             string[] lines = value.SplitLines();
             return string.Join(Environment.NewLine, lines.Select(line => indent + line).ToArray());
         }
@@ -721,8 +737,8 @@ namespace System
         /// <returns></returns>
         public static string[] SplitLines(this string value)
         {
-            return value.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);//will handle multiple types of line breaks.  found at http://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net
-
+            return value.Split(new[] {"\r\n", "\n"}, StringSplitOptions.None);
+                //will handle multiple types of line breaks.  found at http://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net
         }
 
         /// <summary>
@@ -732,7 +748,7 @@ namespace System
         /// <returns></returns>
         public static string CharsOrNull(this string value)
         {
-            return value.CharsOr(null);
+            return value.CharsOr((string) null);
         }
 
         /// <summary>
@@ -746,14 +762,48 @@ namespace System
         }
 
         /// <summary>
-        /// If the value has characters (!IsNullOrEmpty), it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" value.
+        /// If the value has characters, it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" value.
         /// </summary>
         public static string CharsOr(this string value, string returnIfNoChars)
         {
-            if (string.IsNullOrEmpty(value))
-                return returnIfNoChars;
-            else
-                return value;
+            return value.HasChars() ? value : returnIfNoChars;
+        }
+
+        /// <summary>
+        /// If the value has characters, it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" return value.
+        /// </summary>
+        public static string CharsOr(this string value, Func<string> returnIfNoChars)
+        {
+            return value.HasChars() ? value : returnIfNoChars();
+        }
+
+        public static string CharsOr(this string value, CharsThatMatter charMattersCondition, string returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars;
+        }
+
+        public static string CharsOr(this string value, CharsThatMatter charMattersCondition,
+                                     Func<string> returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars();
+        }
+
+
+        public static string CharsOr(this string value, Predicate<char> charMattersCondition, string returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars;
+        }
+
+        /// <summary>
+        /// If the string has any characters that match the given condition, it returns the original string.  Otherwise, it invokes the provided callback to return a "default" value.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="charMattersCondition"></param>
+        /// <returns></returns>
+        public static string CharsOr(this string value, Predicate<char> charMattersCondition,
+                                     Func<string> returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars();
         }
 
 
@@ -791,10 +841,12 @@ namespace System
                         break;
                     case StringTruncating.EllipsisCenter:
                         //get the substrings and put the ellipsis between them
-                        int endLength = maxLength / 2;
-                        int beginningLength = maxLength - endLength; //number to take from beginnning.  this is not trimlength/2 because trimlength may be odd
+                        int endLength = maxLength/2;
+                        int beginningLength = maxLength - endLength;
+                            //number to take from beginnning.  this is not trimlength/2 because trimlength may be odd
 
-                        value = value.Substring(0, beginningLength) + ellipsis + value.Substring(value.Length - endLength);
+                        value = value.Substring(0, beginningLength) + ellipsis +
+                                value.Substring(value.Length - endLength);
                         break;
                     case StringTruncating.EllipsisWord:
                         int nearestWordIndex = value.FindWordBreak(maxLength);
@@ -828,8 +880,10 @@ namespace System
             if (value == null)
                 return -1;
             //todo: not all cultures use word break, but I couldn't find a framework method to handle it
-            int nextWordStart = value.IndexOf(' ', searchStartIndex);//gets the position of the next space from searchStartIndex
-            int previousWordStart = value.Substring(0, searchStartIndex).LastIndexOf(' '); //gets the position of the first previous space from searchStartIndex
+            int nextWordStart = value.IndexOf(' ', searchStartIndex);
+                //gets the position of the next space from searchStartIndex
+            int previousWordStart = value.Substring(0, searchStartIndex).LastIndexOf(' ');
+                //gets the position of the first previous space from searchStartIndex
 
             //no spaces were found, so return the value's length
             if (nextWordStart < 0 && previousWordStart < 0)
@@ -845,8 +899,7 @@ namespace System
             {
                 return previousWordStart;
             }
-            else
-                return nextWordStart;
+            return nextWordStart;
         }
 
         /// <summary>
@@ -896,11 +949,13 @@ namespace System
             {
                 return text;
             }
-            var hasher = string.IsNullOrEmpty(hashAlgorithm) ? KeyedHashAlgorithm.Create() : KeyedHashAlgorithm.Create(hashAlgorithm);
+            KeyedHashAlgorithm hasher = string.IsNullOrEmpty(hashAlgorithm)
+                                            ? KeyedHashAlgorithm.Create()
+                                            : KeyedHashAlgorithm.Create(hashAlgorithm);
             if (hasher == null)
                 throw new ArgumentException("Invalid hash algorithm passed.");
             hasher.Key = encoding.GetBytes(hashKey);
-            var hashed = hasher.ComputeHash(encoding.GetBytes(text.ToCharArray()));
+            byte[] hashed = hasher.ComputeHash(encoding.GetBytes(text.ToCharArray()));
             return Convert.ToBase64String(hashed);
         }
 
@@ -915,7 +970,7 @@ namespace System
         /// <returns></returns>
         public static bool MatchesHash(this string plainText, string hasedValue, string hashKey, string hashAlgorithm)
         {
-            var hashed = plainText.Hash(hashKey, hashAlgorithm);
+            string hashed = plainText.Hash(hashKey, hashAlgorithm);
             return hashed.EqualsExact(hasedValue);
         }
 
@@ -940,20 +995,21 @@ namespace System
         /// <param name="finalSeparator">Separator between the last two elements.</param>
         /// <param name="separatorForListOfTwo">Separator between elements if the list only has two elements.</param>
         /// <returns></returns>
-        public static string AssembleList(this string[] elements, string separator, string finalSeparator, string separatorForTwoElements)
+        public static string AssembleList(this string[] elements, string separator, string finalSeparator,
+                                          string separatorForTwoElements)
         {
             //set the final and listoftwo separators
             if (string.IsNullOrEmpty(finalSeparator)) finalSeparator = separator;
             if (string.IsNullOrEmpty(separatorForTwoElements)) separatorForTwoElements = finalSeparator;
 
-            return elements.Join((separatorIndex) =>
-            {
-                if (elements.Length == 2)
-                    return separatorForTwoElements;
-                if (separatorIndex < elements.Length - 2)
-                    return finalSeparator;
-                return separator;
-            });
+            return elements.Join(separatorIndex =>
+                                     {
+                                         if (elements.Length == 2)
+                                             return separatorForTwoElements;
+                                         if (separatorIndex < elements.Length - 2)
+                                             return finalSeparator;
+                                         return separator;
+                                     });
         }
 
 
@@ -970,22 +1026,20 @@ namespace System
 
             StringBuilder sb = null;
             values.Each((str, index) =>
-            {
-                if (sb == null)
-                    sb = new StringBuilder();
-                else if (separator != null)
-                {
-                    var strSeparator = separator(index);
-                    if (strSeparator != null)
-                        sb.Append(strSeparator);
-
-                }
-                sb.Append(str);
-            });
+                            {
+                                if (sb == null)
+                                    sb = new StringBuilder();
+                                else if (separator != null)
+                                {
+                                    string strSeparator = separator(index);
+                                    if (strSeparator != null)
+                                        sb.Append(strSeparator);
+                                }
+                                sb.Append(str);
+                            });
 
             return sb == null ? null : sb.ToString();
         }
-
 
 
         /// <summary>
@@ -999,7 +1053,7 @@ namespace System
         {
             return value.EndWithout(separator) + otherValue.StartWith(separator);
         }
-       
+
         /// <summary>
         /// Takes the string and using TypeConverters, converts it to the given type.  A nice way to succinctly convert a string into any type.  
         /// </summary>
@@ -1012,16 +1066,23 @@ namespace System
                 return default(T);
             try
             {
-                TypeConverter converter = TypeDescriptor.GetConverter(typeof(T));
-                return (T)converter.ConvertFromInvariantString(value);
+                TypeConverter converter = TypeDescriptor.GetConverter(typeof (T));
+                return (T) converter.ConvertFromInvariantString(value);
             }
             catch (Exception ex)
             {
-                throw new Exception("Error while converting '" + value + "' to " + typeof(T).FullName, ex);
+                throw new Exception("Error while converting '" + value + "' to " + typeof (T).FullName, ex);
             }
         }
 
         #region Advanced Format
+
+        private const char OpeningFormatDelimiter = '{';
+        private const char ClosingFormatDelimiter = '}';
+        private static readonly Object ParsedFormatStringsLock = new Object();
+
+        private static readonly Dictionary<string, Fragment[]> ParsedFormatStrings =
+            new Dictionary<string, Fragment[]>(StringComparer.Ordinal);
 
         /// <summary>
         /// An advanced version of string.Format.  If you pass a primitive object (string, int, etc), it acts like the regular string.Format.  If you pass an anonmymous type, you can name the paramters by property name.
@@ -1040,26 +1101,24 @@ namespace System
             if (arg == null)
                 return formatString;
 
-            var type = arg.GetType();
+            Type type = arg.GetType();
             if (Type.GetTypeCode(type) != TypeCode.Object || type.IsPrimitive)
                 return string.Format(format, formatString, arg);
 
-            var properties = TypeDescriptor.GetProperties(arg);
-            return formatString.Format((property) =>
-            {
-                var value = properties[property].GetValue(arg);
-                return Convert.ToString(value, format);
-            });
+            PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(arg);
+            return formatString.Format(property =>
+                                           {
+                                               object value = properties[property].GetValue(arg);
+                                               return Convert.ToString(value, format);
+                                           });
         }
 
-        public static string Format(this string formatString, IDictionary<string, object> values, IFormatProvider format = null)
+        public static string Format(this string formatString, IDictionary<string, object> values,
+                                    IFormatProvider format = null)
         {
             if (values == null)
                 return formatString;
-            return formatString.Format((token) =>
-            {
-                return Convert.ToString(values[token], format);
-            });
+            return formatString.Format(token => { return Convert.ToString(values[token], format); });
         }
 
         public static string Format(this string formatString, Func<string, string> formatFragmentHandler)
@@ -1067,7 +1126,8 @@ namespace System
             return formatString.Format(formatFragmentHandler, v => v);
         }
 
-        public static string Format(this string formatString, Func<string, string> formatFragmentHandler, Func<string,string> formatLiteralHandler)
+        public static string Format(this string formatString, Func<string, string> formatFragmentHandler,
+                                    Func<string, string> formatLiteralHandler)
         {
             if (string.IsNullOrEmpty(formatString))
                 return formatString;
@@ -1076,12 +1136,11 @@ namespace System
                 return formatString;
 
             return string.Join(string.Empty, fragments.Select(fragment =>
-            {
-                if (fragment.Type == FragmentType.Literal)
-                    return formatLiteralHandler(fragment.Value);
-                else
-                    return formatFragmentHandler(fragment.Value);
-            }).ToArray());
+                                                                  {
+                                                                      if (fragment.Type == FragmentType.Literal)
+                                                                          return formatLiteralHandler(fragment.Value);
+                                                                      return formatFragmentHandler(fragment.Value);
+                                                                  }).ToArray());
         }
 
         private static Fragment[] GetParsedFragments(string formatString)
@@ -1102,18 +1161,12 @@ namespace System
             return fragments;
         }
 
-        private static Object ParsedFormatStringsLock = new Object();
-        private static Dictionary<string, Fragment[]> ParsedFormatStrings = new Dictionary<string, Fragment[]>(StringComparer.Ordinal);
-
-        const char OpeningFormatDelimiter = '{';
-        const char ClosingFormatDelimiter = '}';
-
         /// <summary>
         /// Parses the given format string into a list of fragments.
         /// </summary>
         /// <param name="format"></param>
         /// <returns></returns>
-        static Fragment[] Parse(string format)
+        private static Fragment[] Parse(string format)
         {
             int lastCharIndex = format.Length - 1;
             int currFragEndIndex;
@@ -1121,10 +1174,10 @@ namespace System
 
             if (currFragEndIndex == lastCharIndex)
             {
-                return new Fragment[] { currFrag };
+                return new[] {currFrag};
             }
 
-            List<Fragment> fragments = new List<Fragment>();
+            var fragments = new List<Fragment>();
             while (true)
             {
                 fragments.Add(currFrag);
@@ -1135,13 +1188,12 @@ namespace System
                 currFrag = ParseFragment(format, currFragEndIndex + 1, out currFragEndIndex);
             }
             return fragments.ToArray();
-
         }
 
         /// <summary>
         /// Finds the next delimiter from the starting index.
         /// </summary>
-        static Fragment ParseFragment(string format, int startIndex, out int fragmentEndIndex)
+        private static Fragment ParseFragment(string format, int startIndex, out int fragmentEndIndex)
         {
             bool foundEscapedDelimiter = false;
             FragmentType type = FragmentType.Literal;
@@ -1157,8 +1209,9 @@ namespace System
                 {
                     continue;
                 }
-                else if (i < (numChars - 1) && format[i + 1] == currChar)
-                {//{{ or }}
+                if (i < (numChars - 1) && format[i + 1] == currChar)
+                {
+//{{ or }}
                     i++;
                     foundEscapedDelimiter = true;
                 }
@@ -1170,9 +1223,9 @@ namespace System
                     }
                     else
                     {
-
                         if (type == FragmentType.FormatItem)
-                            throw new FormatException("Two consequtive unescaped { format item openers were found.  Either close the first or escape any literals with another {.");
+                            throw new FormatException(
+                                "Two consequtive unescaped { format item openers were found.  Either close the first or escape any literals with another {.");
 
                         //curr character is the opening of a new format item.  so we close this literal out
                         string literal = format.Substring(startIndex, i - startIndex);
@@ -1184,13 +1237,15 @@ namespace System
                     }
                 }
                 else
-                {//close bracket
+                {
+//close bracket
                     if (i == startIndex || type == FragmentType.Literal)
                         throw new FormatException("A } closing brace existed without an opening { brace.");
 
                     string formatItem = format.Substring(startIndex + 1, i - startIndex - 1);
                     if (foundEscapedDelimiter)
-                        formatItem = ReplaceEscapes(formatItem);//a format item with a { or } in its name is crazy but it could be done
+                        formatItem = ReplaceEscapes(formatItem);
+                    //a format item with a { or } in its name is crazy but it could be done
                     fragmentEndIndex = i;
                     return new Fragment(FragmentType.FormatItem, formatItem);
                 }
@@ -1205,7 +1260,6 @@ namespace System
                 literalValue = ReplaceEscapes(literalValue);
 
             return new Fragment(FragmentType.Literal, literalValue);
-
         }
 
         /// <summary>
@@ -1213,10 +1267,32 @@ namespace System
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        static string ReplaceEscapes(string value)
+        private static string ReplaceEscapes(string value)
         {
             return value.Replace("{{", "{").Replace("}}", "}");
         }
+
+        #region Nested type: Fragment
+
+        private class Fragment
+        {
+            public Fragment(FragmentType type, string value)
+            {
+                Type = type;
+                Value = value;
+            }
+
+            public FragmentType Type { get; private set; }
+
+            /// <summary>
+            /// The literal value, or the name of the fragment, depending on fragment type.
+            /// </summary>
+            public string Value { get; private set; }
+        }
+
+        #endregion
+
+        #region Nested type: FragmentType
 
         private enum FragmentType
         {
@@ -1224,63 +1300,68 @@ namespace System
             FormatItem
         }
 
-        private class Fragment
-        {
-
-            public Fragment(FragmentType type, string value)
-            {
-                Type = type;
-                Value = value;
-            }
-
-            public FragmentType Type
-            {
-                get;
-                private set;
-            }
-
-            /// <summary>
-            /// The literal value, or the name of the fragment, depending on fragment type.
-            /// </summary>
-            public string Value
-            {
-                get;
-                private set;
-            }
-
-
-        }
-
         #endregion
 
+        #endregion
     }
 
 
-
     /// <summary>
-    /// Specifies how to trim charachters from a string that doesn't fit a length specified during Truncate().  Inspired by StringTruncating
+    /// Specifies how to trim charachters from `a string that doesn't fit a length specified during Truncate().  Inspired by StringTruncating
     /// </summary>
     public enum StringTruncating
     {
         /// <summary>
         /// Specifies that the text is trimmed to the nearest character.
         Character,
+
         /// <summary>
         /// Specifies that text is trimmed to the nearest word.  This assumes words are separated by a single space, which may not apply to some cases or cultures.
         /// </summary>
         Word,
+
         /// <summary>
         /// Specifies that the text is trimmed to the nearest character, and an ellipsis is inserted at the end of a trimmed line.
         /// </summary>
         EllipsisCharacter,
+
         /// <summary>
         /// Specifies that text is trimmed to the nearest word, and an ellipsis is inserted at the end of a trimmed line.
         /// </summary>
         EllipsisWord,
+
         /// <summary>
         //  The front and end of the string is left and the ellipsis is put in the middle.
         /// </summary>
         EllipsisCenter
     }
 
+
+    public enum CharsThatMatter
+    {
+        /// <summary>
+        /// Any character counts.
+        /// </summary>
+        Any,
+
+        /// <summary>
+        /// Everything that isn't whitespace is counted.
+        /// </summary>
+        NonWhitespace,
+
+        /// <summary>
+        /// Only letters are counted.
+        /// </summary>
+        Letters,
+
+        /// <summary>
+        /// Only letters and digits counted.
+        /// </summary>
+        LettersAndDigits,
+
+        /// <summary>
+        /// Only digits are counted.
+        /// </summary>
+        Digits,
+    }
 }

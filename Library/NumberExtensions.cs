@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.ComponentModel;
 
@@ -189,11 +186,10 @@ namespace System
                 throw new ArgumentOutOfRangeException("decimals must be 0 or greater.");
 
             if (culture == null)
-                culture = System.Threading.Thread.CurrentThread.CurrentCulture;
+                culture = Threading.Thread.CurrentThread.CurrentCulture;
 
 
-            string strDecimals = decimals.HasValue ? decimals.Value.ToInvariant() : string.Empty;
-            string formatString = null;
+            string formatString;
             switch (format)
             {
                 case NumberFormat.FixedPoint:

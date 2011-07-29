@@ -1,19 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Reflection;
-using System.IO;
-using System.Web.Services;
-using System.Web.Compilation;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Security.Cryptography;
-using System.Globalization;
-using System.ComponentModel;
-using System.Xml.Linq;
 using System.Collections;
-using System.Drawing;
 
 namespace System
 {
@@ -125,7 +112,7 @@ namespace System
         public static IEnumerable<T> Each<T>(this IEnumerable<T> source, Func<T, int, bool> action)
         {
             if (source == null)
-                return source;
+                return null;
 
             int index = 0;
             foreach (var sourceItem in source)
@@ -189,12 +176,9 @@ namespace System
                 {
                     break;
                 }
-                else
-                {
-                    currEx = currEx.InnerException;
-                    sb.AppendLine();
-                    sb.AppendLine("--- Inner Exception ---");
-                }
+                currEx = currEx.InnerException;
+                sb.AppendLine();
+                sb.AppendLine("--- Inner Exception ---");
             }
             return sb.ToString();
         }
@@ -237,7 +221,7 @@ namespace System
                 {
                     if (!DefaultComparers.TryGetValue(valueType, out comparer))
                     {
-                        var defaultComparerProp = typeof(EqualityComparer<>).MakeGenericType(valueType).GetProperty("Default", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                        var defaultComparerProp = typeof(EqualityComparer<>).MakeGenericType(valueType).GetProperty("Default", Reflection.BindingFlags.Static | Reflection.BindingFlags.Public);
                         comparer = (IEqualityComparer)defaultComparerProp.GetValue(null, null);
                         DefaultComparers.Add(valueType, comparer);
                     }
@@ -302,8 +286,7 @@ namespace System
         {
             if (value == null)
                 return defaultVal;
-            else
-                return mapIfHasValue(value);
+            return mapIfHasValue(value);
         }
 
 
