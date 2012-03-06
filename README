@@ -1,0 +1,14 @@
+Does seeing !string.IsNullOrEmpty and "if (foo.IndexOf(bar)…" all over your code base make you sick to your stomach?  Then, you're in luck!
+
+Wetnap is a lightweight of .net extension methods that make coding, especially with strings, a bit easier.  It has all kinds of cool nuggets for testing, splitting, and combining strings.  Some highlights:
+
+   * !string.IsNullOrEmpty(foo) becomes simply foo.HasChars()
+
+   * "www.google.com".After("www.") is "google.com"
+   * "ate hot dogs".StartWith("hate") is "hate hot dogs"
+   * "*feature".Surround("**") is "**feature**"
+   * "aaabaa".StartWithout("a") is "baa"
+
+And it goes on.  Wetnap is a simple drop-in library, available as a nuget package.  Include it in your project and you are set…no namespaces to import and Wetnap won't interfere with existing stuff.
+
+Open source and fully tested, Wetnap makes .net even better.  
