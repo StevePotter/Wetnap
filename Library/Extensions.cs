@@ -186,12 +186,12 @@ namespace System
         #endregion
 
         /// <summary>
-        /// Simply casts the value to a type.  This is intended to be used for fluent programming to cut down on the big parenthesis that often is required when casting values during, say, deserialization.  If the value cannot be casted, an error will be thrown.
+        /// Simply casts the value to a type.  Instead of ((string)objName).ToLower(), you can write objName.CastTo&lt;string&gt;.ToLower().  This is intended to be used for fluent programming to cut down on the wide parenthesis that often is required when casting values during, say, deserialization.  If the value cannot be casted, an error will be thrown.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="value"></param>
         /// <returns></returns>
-        /// <remarks>Couldn't call this Cast because IEnmerable has an extension method that does this and we didn't want to interfere.</remarks>
+        /// <remarks>Couldn't call this Cast because IEnmerable has an extension method that does this and we didn't want to interfere. </remarks>
         public static T CastTo<T>(this object value)
         {
             return (T)value;
@@ -302,8 +302,8 @@ namespace System
         ///         output["quality"] = outputRequest.VideoQuality.Value;
         /// Into this:
         ///     outputRequest.VideoQuality.IfHasVal(v => output["quality"] = v);
-        ///     
-        /// Gets rid of an extra line and the need to have the variable used twice, which when dealign with copy/paste can make mistakes (gotta change 2 variable names instead of 1)
+        /// 
+        /// Gets rid of an extra line and the need to have the variable used twice, which helps prevent bugs when copy pasting (especially in code mapping one type to another).
         /// </remarks>
         public static void IfHasVal<T>(this Nullable<T> value, Action<T> ifHas) where T : struct
         {
@@ -317,6 +317,15 @@ namespace System
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <remarks>
+        /// This is a simple replacement for the cumbersome:
+        /// 
+        /// string asString = obj as string;
+        /// if ( asString != null )
+        /// {
+        ///     do some stuff
+        /// }
+        /// 
+        /// That junk becomes:  obj.IfType[string](asString => do some stuff);
         /// </remarks>
         public static void IfType<T>(this object val, Action<T> actionIfIsType) where T : class
         { 
@@ -343,9 +352,6 @@ namespace System
 
         #endregion
 
-
     }
-
-
 
 }

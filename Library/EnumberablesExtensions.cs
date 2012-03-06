@@ -91,7 +91,7 @@ namespace System
         #region ISet
 
         /// <summary>
-        /// Adds a bnuch of items to the set at once.
+        /// Adds a bunch of items to the set at once.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="set"></param>

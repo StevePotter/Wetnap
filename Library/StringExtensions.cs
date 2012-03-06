@@ -12,13 +12,15 @@ namespace System
     /// </summary>
     partial class WetnapExtensions
     {
+        #region Checking
+
         private static readonly Regex alphaNumeric = new Regex("[a-zA-Z0-9]");
         private static readonly Regex alpha = new Regex("[a-zA-Z]");
         private static readonly Regex numericNoDecimal = new Regex("[0-9]");
         private static readonly Regex numericDecimal = new Regex(@"[0-9\.]");
 
         /// <summary>
-        /// Whether the value is not null and has at least one character.  It's the exact same thing as writing the clunky !string.IsNullOrEmpty(value).
+        /// Indicates whether the value is not null and has at least one character.  It's the exact same thing as writing the clunky !string.IsNullOrEmpty(value).
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
@@ -28,7 +30,7 @@ namespace System
         }
 
         /// <summary>
-        /// Whether the value is not null and has at least one character, with an option to disregard whitespace.
+        /// Indicates whether the value is not null and has at least one character, with an option to disregard whitespace.
         /// </summary>
         /// <param name="countWhitespaceAsChars">When true, the method will return true even if there are only whitespace characters.  If false and the string is only whitespace, the method will return false.</param>
         [Obsolete("Use HasChars(CharsToCount) instead.")]
@@ -76,6 +78,18 @@ namespace System
             return value.Any(t => charMattersCondition(t));
         }
 
+
+        /// <summary>
+        /// Indicates whether the string has at least one letter.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        [Obsolete("Use value.HasChars(Char.IsLetter) instead.")]
+        public static bool HasLetters(this string value)
+        {
+            return value.HasChars(Char.IsLetter);
+        }
+
         /// <summary>
         /// Just a shortcut for the awkward string.IsNullOrEmpty static method.
         /// </summary>
@@ -98,22 +112,7 @@ namespace System
         }
 
         /// <summary>
-        /// Just a shortcut for Equals(StringComparison.Ordinal).  Slightly shorter and neater.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-//todo: check this        [Obsolete("Normal string.Equals(string) does this anyway.  Whoops!")]
-        public static bool EqualsExact(this string value, string match)
-        {
-            if (value == null)
-                return match == null;
-            if (match == null)
-                return false;
-            return value.Equals(match, StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// Just a shortcut for Equals(StringComparison.Ordinal).  Slightly shorter and neater.
+        /// Just a shortcut for Equals(StringComparison.Ordinal).
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
@@ -125,7 +124,6 @@ namespace System
                 return false;
             return value.Equals(match, StringComparison.OrdinalIgnoreCase);
         }
-
 
         /// <summary>
         /// Indicates whether the string passed in is equal to any of the possible matches provided.
@@ -153,6 +151,45 @@ namespace System
             return false;
         }
 
+        /// <summary>
+        /// Indicates whether the string contains the string provided.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        public static bool Contains(this string value, string match, StringComparison comparison)
+        {
+            return ContainsAny(value, comparison, match);
+        }
+
+        /// <summary>
+        /// Indicates whether the string contains any of the strings provided.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        public static bool ContainsAny(this string value, StringComparison comparison, params string[] matches)
+        {
+            if (matches == null || matches.Length == 0)
+                throw new ArgumentException("values is empty");
+
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            foreach (string match in matches)
+            {
+                int index = value.IndexOf(match, 0, comparison);
+                if (index >= 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        #endregion
+
+        #region Filtering
 
         /// <summary>
         /// Removes all occurances of the given string.
@@ -162,160 +199,10 @@ namespace System
         /// <returns></returns>
         public static string Strip(this string value, string toRemove)
         {
-            if (value == null)
-                return null;
+            if (!value.HasChars() || !toRemove.HasChars())
+                return value;
             return value.Replace(toRemove, String.Empty);
         }
-
-
-        /// <summary>
-        /// Gets the string that comes before the first occurance of the match is found.  For example, calling "I eat hot dog".Before("hot") would return "i eat ".
-        /// Returns null if the match wasn't found.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static string Before(this string value, string match)
-        {
-            return value.Before(match, StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// Gets the string that comes before the first occurance of the match is found.  For example, calling "I eat hot dog".Before("hot") would return "i eat ".
-        /// Returns null if the match wasn't found.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static string Before(this string value, string match, StringComparison comparison)
-        {
-            if (value == null)
-                return null;
-            var index = value.IndexOf(match, 0, comparison);
-            if (index >= 0)
-            {
-                return value.Substring(0, index);
-            }
-            return null;
-        }
-
-
-        /// <summary>
-        /// Gets the string that comes after the last occurance of the match is found.  For example, calling "I eat hot dog".After("hot") would return "i eat ".
-        /// Returns null if the match wasn't found.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static string After(this string value, string match)
-        {
-            return value.After(match, StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// Gets the string that comes after the first occurance of the match is found.  For example, calling "I eat hot dog".After("hot") would return " dog".
-        /// Returns null if the match wasn't found.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static string After(this string value, string match, StringComparison comparison)
-        {
-            return After(value, match, 1, false, comparison);
-        }
-
-        /// <summary>
-        /// Gets the substring of source that comes after an occurance of the match string.
-        /// </summary>
-        /// <param name="source">The string whose substring will be returned.</param>
-        /// <param name="match">The string to find within the source string.</param>
-        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  <= 0 indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
-        /// <param name="prependMatch">When true, the match will be prepended to the result.  The prepended value is taken from the original string, not the actual "match" property.  This matters when ignoring case.  Like "very good".After("VERY") with match prepended will return "very good".</param>
-        /// <param name="comparison">The type of comparison when searching through files.</param>
-        /// <returns></returns>
-        public static string After(this string source, string match, int matchOccurance, bool prependMatch,
-                                   StringComparison comparison)
-        {
-            if (source == null)
-            {
-                return null;
-            }
-            //nothing to match so just return the source string.
-            if (!match.HasChars())
-            {
-                return source;
-            }
-            var index = int.MinValue;
-            //check for last occurance
-            if (matchOccurance <= 0)
-            {
-                index = source.LastIndexOf(match, comparison);
-                if (index < 0)
-                    return null;
-                return prependMatch ? source.Substring(index) : source.Substring(index + match.Length);
-            }
-            for (var i = 0; i < matchOccurance; i++)
-            {
-                index = source.IndexOf(match, i == 0 ? 0 : index + match.Length, comparison);
-                if (index < 0)
-                    return null;
-            }
-            return prependMatch ? source.Substring(index) : source.Substring(index + match.Length);
-        }
-
-        public static string AfterLast(this string value, string match)
-        {
-            return value.AfterLast(match, StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// Gets the string that comes after the first occurance of the match is found.  For example, calling "I eat hot dog".After("hot") would return " dog".
-        /// Returns null if the match wasn't found.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static string AfterLast(this string value, string match, StringComparison comparison)
-        {
-            return After(value, match, 0, false, comparison);
-        }
-
-        /// <summary>
-        /// Gets the string that comes after the beginning the first occurance of the given match.  For example, "you didn't know".From("did") == "didn't know".  Uses case-sensitive ordinal search.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        /// <remarks>A good opposite to this could be Until, although that's not right (Up to and including...find a one word answer for that)</remarks>
-        public static string From(this string value, string match)
-        {
-            return value.From(match, StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// Gets the string that comes after the beginning the first occurance of the given match.  For example, "you didn't know".From("did") == "didn't know"
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        /// <remarks>A good opposite to this could be Until, although that's not right (Up to and including...find a one word answer for that)</remarks>
-        public static string From(this string value, string match, StringComparison comparison)
-        {
-            return After(value, match, 1, true, comparison);
-        }
-
-
-        /// <summary>
-        /// Indicates whether the string has at least one letter.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        [Obsolete("Use value.HasChars(Char.IsLetter) instead.")]
-        public static bool HasLetters(this string value)
-        {
-            return value.HasChars(Char.IsLetter);
-        }
-
 
         /// <summary>
         /// Removes everything that is not in the filter text from the input.
@@ -396,42 +283,9 @@ namespace System
             return input.Filter(keepDecimal ? numericDecimal : numericNoDecimal);
         }
 
-        /// <summary>
-        /// Indicates whether the string contains the string provided.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static bool Contains(this string value, string match, StringComparison comparison)
-        {
-            return ContainsAny(value, comparison, match);
-        }
+        #endregion
 
-        /// <summary>
-        /// Indicates whether the string contains any of the strings provided.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="match"></param>
-        /// <returns></returns>
-        public static bool ContainsAny(this string value, StringComparison comparison, params string[] matches)
-        {
-            if (matches == null || matches.Length == 0)
-                throw new ArgumentException("values is empty");
-
-            if (string.IsNullOrEmpty(value))
-                return false;
-
-            foreach (string match in matches)
-            {
-                int index = value.IndexOf(match, 0, comparison);
-                if (index >= 0)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
+        #region Conversion
 
         /// <summary>
         /// Converts this value to an integer, throwing an exception if there are any problems.
@@ -455,6 +309,22 @@ namespace System
             int val;
             return int.TryParse(value, out val) ? val : new int?();
         }
+
+
+        /// <summary>
+        /// Splits the string into its given lines.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="doubleQuotes"></param>
+        /// <returns></returns>
+        public static string[] SplitLines(this string value)
+        {
+            return value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None); //will handle multiple types of line breaks.  found at http://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net
+        }
+
+        #endregion
+
+        #region Formatting
 
         /// <summary>
         /// Lowercases the first character, if one exists.
@@ -480,6 +350,430 @@ namespace System
                 return null;
             return string.IsNullOrEmpty(value) ? value : char.ToUpper(value[0]) + value.Substring(1);
         }
+
+        /// <summary>
+        /// Adds a certain number of spaces to each line in the string.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="doubleQuotes"></param>
+        /// <returns></returns>
+        public static string Indent(this string value, int spaces = 4)
+        {
+            string indent = "".PadLeft(spaces, ' ');
+            string[] lines = value.SplitLines();
+            return string.Join(Environment.NewLine, lines.Select(line => indent + line).ToArray());
+        }
+
+
+        /// <summary>
+        /// If the value has characters, it returns the string.  If null or empty, it returns null.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string CharsOrNull(this string value)
+        {
+            return value.CharsOr((string)null);
+        }
+
+        /// <summary>
+        /// If the value has characters, it returns the string.  If it is null or empty, it returns empty.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static string CharsOrEmpty(this string value)
+        {
+            return value.CharsOr(string.Empty);
+        }
+
+        /// <summary>
+        /// If the value has characters, it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" value.
+        /// </summary>
+        public static string CharsOr(this string value, string returnIfNoChars)
+        {
+            return value.HasChars() ? value : returnIfNoChars;
+        }
+
+        /// <summary>
+        /// If the value has characters, it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" return value.
+        /// </summary>
+        public static string CharsOr(this string value, Func<string> returnIfNoChars)
+        {
+            return value.HasChars() ? value : returnIfNoChars();
+        }
+
+        public static string CharsOr(this string value, CharsThatMatter charMattersCondition, string returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars;
+        }
+
+        public static string CharsOr(this string value, CharsThatMatter charMattersCondition,
+                                     Func<string> returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars();
+        }
+
+
+        public static string CharsOr(this string value, Predicate<char> charMattersCondition, string returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars;
+        }
+
+        /// <summary>
+        /// If the string has any characters that match the given condition, it returns the original string.  Otherwise, it invokes the provided callback to return a "default" value.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="charMattersCondition"></param>
+        /// <returns></returns>
+        public static string CharsOr(this string value, Predicate<char> charMattersCondition,
+                                     Func<string> returnIfNoChars)
+        {
+            return value.HasChars(charMattersCondition) ? value : returnIfNoChars();
+        }
+
+
+        /// <summary>
+        /// If the length of this string exceeds the max, it will be trimmed according to the type specified.
+        /// </summary>
+        public static string Truncate(this string value, int maxLength, StringTruncating trimMode)
+        {
+            return Truncate(value, maxLength, trimMode, "...");
+        }
+
+        /// <summary>
+        /// If the length of this string exceeds the max, it will be trimmed according to the type specified.
+        /// </summary>
+        /// <param name="value">The value to be truncated.</param>
+        /// <param name="maxLength">The max length of the string.</param>
+        /// <param name="trimming">The type of truncation to be used.</param>
+        /// <param name="ellipsis">If an ellipsis is used, this is the one used.  Default is "..."</param>
+        /// <returns></returns>
+        public static string Truncate(this string value, int maxLength, StringTruncating trimming, string ellipsis)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+            //trim
+            if (maxLength > 0 && value.Length > maxLength)
+            {
+                if (ellipsis == null)
+                    ellipsis = "...";
+                switch (trimming)
+                {
+                    case StringTruncating.Character:
+                        value = value.Substring(0, maxLength);
+                        break;
+                    case StringTruncating.EllipsisCharacter:
+                        value = value.Substring(0, maxLength) + ellipsis;
+
+                        break;
+                    case StringTruncating.EllipsisCenter:
+                        //get the substrings and put the ellipsis between them
+                        int endLength = maxLength / 2;
+                        int beginningLength = maxLength - endLength;
+                        //number to take from beginnning.  this is not trimlength/2 because trimlength may be odd
+
+                        value = value.Substring(0, beginningLength) + ellipsis +
+                                value.Substring(value.Length - endLength);
+                        break;
+                    case StringTruncating.EllipsisWord:
+                        int nearestWordIndex = value.FindWordBreak(maxLength);
+                        //no nearest word, so just leave the value
+                        if (nearestWordIndex >= 0) value = value.Substring(0, nearestWordIndex) + ellipsis;
+                        break;
+                    case StringTruncating.Word:
+                        nearestWordIndex = value.FindWordBreak(maxLength);
+                        //no nearest word, so just leave the value
+                        if (nearestWordIndex >= 0) value = value.Substring(0, nearestWordIndex);
+                        break;
+                    default:
+                        throw new InvalidEnumArgumentException("Invalid TrimMode value.");
+                }
+            }
+
+            return value;
+        }
+
+
+
+
+        #endregion
+
+        #region Splitting
+
+        #region Before, BeforeLast, After, AfterLast
+
+        /// <summary>
+        /// Default includeMatch for Before and BeforeLast.  In the future this could be exposed so devs could change defaults.
+        /// </summary>
+        private static bool DefaultIncludeMatchForBefore = false;
+        /// <summary>
+        /// Default comaprison for Before and BeforeLast.  In the future this could be exposed so devs could change defaults.
+        /// </summary>
+        private static StringComparison DefaultComparisonForBefore = StringComparison.Ordinal;
+
+        /// <summary>
+        /// Gets the substring that comes before the first occurance of the match is found.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <example>"I eat hot dog".Before("hot") == "I eat ".</example>
+        public static string Before(this string source, string match)
+        {
+            return source.Before(match, DefaultComparisonForBefore);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the first occurance of the match is found, optionally appending the match to the result.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="includeMatch">When true, the match is appended to the result, if the match was found.</param>
+        /// <example>"I eat hot dog".Before("hot", false) == "I eat ".</example>
+        /// <example>"I eat hot dog".Before("hot", true) == "I eat ".</example>
+        public static string Before(this string source, string match, bool includeMatch)
+        {
+            return Before(source, match, 1, includeMatch, DefaultComparisonForBefore);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the first occurance of the match is found.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="comparison">The type of comparison used when searching.</param>
+        public static string Before(this string source, string match, StringComparison comparison)
+        {
+            return Before(source, match, 1, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the first occurance of the match is found, optionally appending the match to the result.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="includeMatch">When true, the match is appended to the result, if the match was found.</param>
+        /// <param name="comparison">The type of comparison used when searching.</param>
+        public static string Before(this string source, string match, bool includeMatch, StringComparison comparison)
+        {
+            return Before(source, match, 1, includeMatch, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the Xth occurance of the match is found.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  0 or less indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="comparison">The type of comparison used when searching.</param>
+        public static string Before(this string source, string match, int matchOccurance, StringComparison comparison)
+        {
+            return Before(source, match, matchOccurance, DefaultIncludeMatchForBefore, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the Xth occurance of the match is found, optionally appending the match to the result.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  0 or less indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="includeMatch">When true, the match is appended to the result, if the match was found.</param>
+        public static string Before(this string source, string match, int matchOccurance, bool includeMatch)
+        {
+            return Before(source, match, matchOccurance, includeMatch, DefaultComparisonForBefore);                    
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the Xth occurance of the match is found, optionally appending the match to the result.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  0 or less indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="includeMatch">When true, the match is appended to the result, if the match was found.</param>
+        /// <param name="comparison">The type of comparison used when searching.</param>
+        public static string Before(this string source, string match, int matchOccurance, bool includeMatch, StringComparison comparison)
+        {
+            if (!source.HasChars() || !match.HasChars())
+                return source;
+
+            var index = source.IndexOfOccurance(match, matchOccurance, comparison);
+            //index is the start of the match
+            return index < 0 ? null : (includeMatch ? source.Substring(0, index + match.Length) : source.Substring(0, index));
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the last occurance of the match is found.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <example>"I eat hot hot dog".Before("hot") == "I eat hot ".</example>
+        public static string BeforeLast(this string value, string match)
+        {
+            return value.BeforeLast(match, DefaultComparisonForBefore);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the last occurance of the match is found, optionally appending the match to the result.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="includeMatch">When true, the match is appended to the result, if the match was found.</param>
+        public static string BeforeLast(this string source, string match, bool includeMatch)
+        {
+            return BeforeLast(source, match, includeMatch, DefaultComparisonForBefore);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the last occurance of the match is found.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="comparison">The type of comparison used when searching.</param>
+        public static string BeforeLast(this string source, string match, StringComparison comparison)
+        {
+            return BeforeLast(source, match, DefaultIncludeMatchForBefore, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes before the last occurance of the match is found, optionally appending the match to the result.  Otherwise, it returns null.
+        /// </summary>
+        /// <param name="source">The main string being evaluated.</param>
+        /// <param name="match">The string that is being searched for within source.</param>
+        /// <param name="includeMatch">When true, the match is appended to the result, if the match was found.</param>
+        /// <param name="comparison">The type of comparison used when searching.</param>
+        public static string BeforeLast(this string source, string match, bool includeMatch, StringComparison comparison)
+        {
+            return Before(source, match, 0, includeMatch, comparison);
+        }
+
+
+        /// <summary>
+        /// Default includeMatch for After and AfterLast.  In the future this could be exposed so devs could change defaults.
+        /// </summary>
+        private static bool DefaultIncludeMatchForAfter = false;
+        /// <summary>
+        /// Default comaprison for After and AfterLast.  In the future this could be exposed so devs could change defaults.
+        /// </summary>
+        private static StringComparison DefaultComparisonForAfter = StringComparison.Ordinal;
+
+
+        /// <summary>
+        /// Gets the substring that comes after the first occurance of the match, or null if the match isn't found.
+        /// </summary>
+        public static string After(this string value, string match)
+        {
+            return value.After(match, DefaultComparisonForAfter);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the first occurance of the match, or null if the match isn't found.
+        /// </summary>
+        public static string After(this string value, string match, bool includeMatch)
+        {
+            return value.After(match, includeMatch, DefaultComparisonForAfter);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the first occurance of the match, or null if the match isn't found.
+        /// </summary>
+        public static string After(this string value, string match, StringComparison comparison)
+        {
+            return After(value, match, 1, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the first occurance of the match, or null if the match isn't found.
+        /// </summary>
+        public static string After(this string value, string match, bool includeMatch, StringComparison comparison)
+        {
+            return After(value, match, 1, includeMatch, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the Xth occurance of the match, or null if the match isn't found.
+        /// </summary>
+        public static string After(this string source, string match, int matchOccurance)
+        {
+            return After(source, match, matchOccurance, DefaultComparisonForAfter);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the Xth occurance of the match, or null if the match isn't found.
+        /// </summary>
+        public static string After(this string source, string match, int matchOccurance, bool includeMatch)
+        {
+            return After(source, match, matchOccurance, includeMatch, DefaultComparisonForAfter);
+        }
+
+        /// <summary>
+        /// Gets the string that comes after the last occurance of the match.  So "me me me you".AfterLast("me") == " you".
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        public static string AfterLast(this string value, string match)
+        {
+            return value.AfterLast(match, DefaultComparisonForAfter);
+        }
+
+        /// <summary>
+        /// Gets the string that comes after the last occurance of the match. 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        public static string AfterLast(this string value, string match, bool includeMatch)
+        {
+            return value.AfterLast(match, includeMatch, DefaultComparisonForAfter);
+        }
+
+        /// <summary>
+        /// Gets the string that comes after the last occurance of the match. 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="match"></param>
+        /// <returns></returns>
+        public static string AfterLast(this string value, string match, StringComparison comparison)
+        {
+            return After(value, match, 0, comparison);
+        }
+
+        /// <summary>
+        /// Gets the string that comes after the last occurance of the match. 
+        /// </summary>
+        public static string AfterLast(this string value, string match, bool includeMatch, StringComparison comparison)
+        {
+            return After(value, match, 0, includeMatch, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the Xth occurance of the match, or null if the match isn't found.
+        /// </summary>
+        /// <param name="source">The string whose substring will be returned.</param>
+        /// <param name="match">The string to find within the source string.</param>
+        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  0 or less indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="comparison">The type of comparison when searching.</param>
+        public static string After(this string source, string match, int matchOccurance, StringComparison comparison)
+        {
+            return After(source, match, matchOccurance, DefaultIncludeMatchForAfter, comparison);
+        }
+
+        /// <summary>
+        /// Gets the substring that comes after the Xth occurance of the match, or null if the match isn't found.  Optionally includes match in the result.
+        /// </summary>
+        /// <param name="source">The string whose substring will be returned.</param>
+        /// <param name="match">The string to find within the source string.</param>
+        /// <param name="matchOccurance">Indicates after which occurance of the match string will be returned.  0 or less indicates the last occurance.  1 is the first, 2 is the second, etc.</param>
+        /// <param name="includeMatch">If true, the match will be prepended to the result, meaning the result is after and including the match.  Default is false.</param>
+        /// <param name="comparison">The type of comparison when searching.</param>
+        public static string After(this string source, string match, int matchOccurance, bool includeMatch, StringComparison comparison)
+        {
+            if (!source.HasChars() || !match.HasChars())
+                return source;
+
+            var index = source.IndexOfOccurance(match, matchOccurance, comparison);
+            return index < 0 ? null : (includeMatch ? source.Substring(index) : source.Substring(index + match.Length));
+        }
+
+        #endregion
 
         /// <summary>
         /// Returns the specified number of characters from the end of the string.  If the string is shorter than the number of chars specified, the entire string will be returned.
@@ -509,7 +803,7 @@ namespace System
         public static string RemoveFromEnd(this string value, int chars)
         {
             if (chars < 0)
-                throw new ArgumentOutOfRangeException("value","chars must be >= 0");
+                throw new ArgumentOutOfRangeException("value", "chars must be >= 0");
             if (value == null)
                 return null;
 
@@ -521,103 +815,171 @@ namespace System
         }
 
 
-        /// <summary>
-        /// If the value doesn't start with startWith, this adds it.
-        /// </summary>
-        /// <param name="startsWith"></param>
-        /// <returns></returns>
-        public static string StartWith(this string value, string startsWith)
-        {
-            return value.StartWith(startsWith, StringComparison.Ordinal);
-        }
+        #endregion
+
+        #region Combining
 
         /// <summary>
         /// If the value doesn't start with startWith, this adds it.
         /// </summary>
-        /// <param name="startsWith"></param>
+        /// <param name="prefix"></param>
         /// <returns></returns>
-        public static string StartWith(this string value, string startsWith, StringComparison comparisonType)
+        public static string StartWith(this string value, string prefix)
         {
-            if (string.IsNullOrEmpty(value))
-                return startsWith;
-            return value.StartsWith(startsWith, comparisonType) ? value : string.Concat(startsWith, value);
+            return value.StartWith(prefix, StringComparison.Ordinal);
         }
 
         /// <summary>
-        /// If the value starts with startWith, this removes it.  It will repeat until it no longers starts with it, so "AAAB".NotStartingWith("A") == "B"
+        /// If the value doesn't start with startWith, this adds it.
         /// </summary>
-        /// <param name="startsWith"></param>
+        /// <param name="prefix"></param>
         /// <returns></returns>
-        public static string StartWithout(this string value, string startsWith)
+        public static string StartWith(this string value, string prefix, StringComparison comparisonType)
         {
-            return value.StartWithout(startsWith, StringComparison.Ordinal);
+            return value.StartWith(prefix, true, comparisonType);
         }
 
+
         /// <summary>
-        /// If the value starts with startWith, this removes it.  It will repeat until it no longers starts with it, so "AAAB".NotStartingWith("A") == "B"
+        /// Ensures the string starts with the given value.
         /// </summary>
-        /// <param name="startsWith"></param>
+        /// <param name="value">The string to potentially prepend startsWith.</param>
+        /// <param name="prefix">The string that value must start with.</param>
+        /// <param name="allowPartialMatch">If true "ttp".StartWith("http") will be "http".  If false it would be "httpttp".  So the long explanation is this specifies whether if the value starts with a partial start of startsWith, that partial match is trimmed from the prepended value.</param>
+        /// <param name="comparisonType"></param>
         /// <returns></returns>
-        public static string StartWithout(this string value, string startsWith, StringComparison comparisonType)
+        public static string StartWith(this string value, string prefix, bool allowPartialMatch, StringComparison comparisonType)
         {
-            if (string.IsNullOrEmpty(value))
+            if (prefix == null)
                 return value;
-            return value.StartsWith(startsWith, comparisonType)
-                       ? value.Substring(startsWith.Length).StartWithout(startsWith, comparisonType)
+            if (string.IsNullOrEmpty(value))
+                return prefix;
+            if (value.StartsWith(prefix, comparisonType))
+                return value;
+
+            if (allowPartialMatch)
+            {
+                //start with the biggest non-full match and work backwards.  it doesen't already start with it, so you can skip the first letter
+                for (var i = 1; i < prefix.Length; i++)
+                {
+                    var partialMatch = prefix.FromEnd(prefix.Length - i);
+                    if ( value.StartsWith(partialMatch, comparisonType))
+                    {
+                        return string.Concat(prefix.Substring(0, i), value);
+                    }
+                }
+            }
+
+            return string.Concat(prefix, value);
+        }
+
+        /// <summary>
+        /// Ensures the string doesn't begin with the given prefix.
+        /// </summary>
+        /// <remarks>
+        /// It will repeat until it no longers starts with it, so "AAAB".NotStartingWith("A") == "B".
+        /// </remarks>
+        public static string StartWithout(this string value, string prefix)
+        {
+            return value.StartWithout(prefix, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Ensures the string doesn't begin with the given prefix.
+        /// </summary>
+        /// <remarks>
+        /// It will repeat until it no longers starts with it, so "AAAB".NotStartingWith("A") == "B".
+        /// </remarks>
+        public static string StartWithout(this string value, string prefix, StringComparison comparisonType)
+        {
+            if (!value.HasChars() || !prefix.HasChars())
+                return value;
+
+            return value.StartsWith(prefix, comparisonType)
+                       ? value.Substring(prefix.Length).StartWithout(prefix, comparisonType)
                        : value;
         }
 
-
         /// <summary>
-        /// If the value doesn't end with endWith, this adds it.
+        /// If the value doesn't end with endWith, this adds it.  If it already ends with part of endsWith, only the remaining substring is added.
         /// </summary>
-        /// <param name="endsWith"></param>
+        /// <param name="suffix"></param>
         /// <returns></returns>
-        public static string EndWith(this string value, string endsWith)
+        public static string EndWith(this string value, string suffix)
         {
-            return value.EndWith(endsWith, StringComparison.Ordinal);
+            return value.EndWith(suffix, StringComparison.Ordinal);
         }
 
         /// <summary>
-        /// If the value doesn't end with endWith, this adds it.
+        /// If the value doesn't end with endWith, this adds it.  If it already ends with part of endsWith, only the remaining substring is added.
         /// </summary>
-        /// <param name="endsWith"></param>
+        /// <param name="suffix"></param>
         /// <returns></returns>
         /// <remarks>
-        /// todo: There is a problem with this.  "/te".EndingWith("/test") will create "/te/test", which it shouldn't do.  
         /// </remarks>
-        public static string EndWith(this string value, string endsWith, StringComparison comparisonType)
+        public static string EndWith(this string value, string suffix, StringComparison comparisonType)
         {
+            return value.EndWith(suffix, true, comparisonType);
+        }
+
+        /// <summary>
+        /// Ensures the string ends with the given value.
+        /// </summary>
+        /// <param name="value">The string to potentially append endsWith to.</param>
+        /// <param name="suffix">The string that value must end with.</param>
+        /// <param name="allowPartialMatch">If true "hi jim".EndWith("jimmy") will be "hi jimmy".  If false it would be "hi jimjimmy".  So the long explanation is this specifies whether if the value ends with a partial start of endsWith, that partial match is trimmed from the appended value.</param>
+        /// <param name="comparisonType"></param>
+        /// <returns></returns>
+        public static string EndWith(this string value, string suffix, bool allowPartialMatch, StringComparison comparisonType)
+        {
+            if (suffix == null)
+                return value;
             if (string.IsNullOrEmpty(value))
-                return endsWith;
-            return value.EndsWith(endsWith, comparisonType) ? value : string.Concat(value, endsWith);
+                return suffix;
+            if (value.EndsWith(suffix, comparisonType))
+                return value;
+
+            if (allowPartialMatch)
+            {
+                //start with the biggest non-full match and work backwards
+                for( var i = 1; i < suffix.Length; i++ )
+                {
+                    var partialMatch = suffix.RemoveFromEnd(i);
+                    if ( value.EndsWith(partialMatch, comparisonType))
+                    {
+                        return string.Concat(value, suffix.FromEnd(i));
+                    }
+                }
+            }
+
+            return string.Concat(value, suffix);
         }
 
 
         /// <summary>
         /// If the value ends with endWith, this removes it.  It will repeat until it no longers ends with it, so "ABBB".NotEndingWith("B") == "A", "tr".NotEndingWith("a") == ""
         /// </summary>
-        /// <param name="endsWith"></param>
+        /// <param name="suffix"></param>
         /// <returns></returns>
-        public static string EndWithout(this string value, string endsWith)
+        public static string EndWithout(this string value, string suffix)
         {
-            return value.EndWithout(endsWith, StringComparison.Ordinal);
+            return value.EndWithout(suffix, StringComparison.Ordinal);
         }
 
         /// <summary>
-        /// If the value ends with endWith, this removes it.  It will repeat until it no longers ends with it, so "AAAB".NotEndingWith("A") == "B"
+        /// If the value ends with endWith, this removes it.
         /// </summary>
-        /// <param name="endsWith"></param>
+        /// <param name="suffix"></param>
         /// <returns></returns>
-        public static string EndWithout(this string value, string endsWith, StringComparison comparisonType)
+        public static string EndWithout(this string value, string suffix, StringComparison comparisonType)
         {
-            if (string.IsNullOrEmpty(value))
+            if (!value.HasChars() || !suffix.HasChars())
                 return value;
-            return value.EndsWith(endsWith, comparisonType)
-                       ? value.RemoveFromEnd(endsWith.Length).EndWithout(endsWith, comparisonType)
+
+            return value.EndsWith(suffix, comparisonType)
+                       ? value.RemoveFromEnd(suffix.Length).EndWithout(suffix, comparisonType)
                        : value;
         }
-
 
         /// <summary>
         /// If the value doesn't start and end with surroundedBy, this adds it to the necessary sides.
@@ -716,191 +1078,142 @@ namespace System
         }
 
 
+
+
         /// <summary>
-        /// Adds a certain number of spaces to each line in the string.
+        /// Assembles a list in the standard English style, like "one, two, and three" or "one and two"
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="doubleQuotes"></param>
+        /// <param name="elements">The string elements to include in the list.</param>
         /// <returns></returns>
-        public static string Indent(this string value, int spaces = 4)
+        /// <example>Passing in {"1","2","3"} will return "1, 2, and 3".</example>
+        public static string AssembleList(this string[] elements)
         {
-            string indent = "".PadLeft(spaces, ' ');
-            string[] lines = value.SplitLines();
-            return string.Join(Environment.NewLine, lines.Select(line => indent + line).ToArray());
+            return AssembleList(elements, ", ", ", and ", " and ");
         }
 
+
         /// <summary>
-        /// Splits the string into its given lines.
+        /// Assembles a list with specified elemets and separators.
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="doubleQuotes"></param>
+        /// <param name="elements">The string elements to include in the list.</param>
+        /// <param name="separator">Separator between elements.</param>
+        /// <param name="finalSeparator">Separator between the last two elements.</param>
+        /// <param name="separatorForListOfTwo">Separator between elements if the list only has two elements.</param>
         /// <returns></returns>
-        public static string[] SplitLines(this string value)
+        public static string AssembleList(this string[] elements, string separator, string finalSeparator,
+                                          string separatorForTwoElements)
         {
-            return value.Split(new[] {"\r\n", "\n"}, StringSplitOptions.None);
-                //will handle multiple types of line breaks.  found at http://stackoverflow.com/questions/1547476/easiest-way-to-split-a-string-on-newlines-in-net
-        }
+            //set the final and listoftwo separators
+            if (string.IsNullOrEmpty(finalSeparator)) finalSeparator = separator;
+            if (string.IsNullOrEmpty(separatorForTwoElements)) separatorForTwoElements = finalSeparator;
 
-        /// <summary>
-        /// If the value has characters, it returns the string.  If null or empty, it returns null.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static string CharsOrNull(this string value)
-        {
-            return value.CharsOr((string) null);
-        }
-
-        /// <summary>
-        /// If the value has characters, it returns the string.  If it is null or empty, it returns empty.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static string CharsOrEmpty(this string value)
-        {
-            return value.CharsOr(string.Empty);
-        }
-
-        /// <summary>
-        /// If the value has characters, it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" value.
-        /// </summary>
-        public static string CharsOr(this string value, string returnIfNoChars)
-        {
-            return value.HasChars() ? value : returnIfNoChars;
-        }
-
-        /// <summary>
-        /// If the value has characters, it returns the original string.  If it is null or empty, it returns the "returnIfNoChars" return value.
-        /// </summary>
-        public static string CharsOr(this string value, Func<string> returnIfNoChars)
-        {
-            return value.HasChars() ? value : returnIfNoChars();
-        }
-
-        public static string CharsOr(this string value, CharsThatMatter charMattersCondition, string returnIfNoChars)
-        {
-            return value.HasChars(charMattersCondition) ? value : returnIfNoChars;
-        }
-
-        public static string CharsOr(this string value, CharsThatMatter charMattersCondition,
-                                     Func<string> returnIfNoChars)
-        {
-            return value.HasChars(charMattersCondition) ? value : returnIfNoChars();
-        }
-
-
-        public static string CharsOr(this string value, Predicate<char> charMattersCondition, string returnIfNoChars)
-        {
-            return value.HasChars(charMattersCondition) ? value : returnIfNoChars;
-        }
-
-        /// <summary>
-        /// If the string has any characters that match the given condition, it returns the original string.  Otherwise, it invokes the provided callback to return a "default" value.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="charMattersCondition"></param>
-        /// <returns></returns>
-        public static string CharsOr(this string value, Predicate<char> charMattersCondition,
-                                     Func<string> returnIfNoChars)
-        {
-            return value.HasChars(charMattersCondition) ? value : returnIfNoChars();
-        }
-
-
-        public static string Truncate(this string value, int maxLength, StringTruncating trimMode)
-        {
-            return Truncate(value, maxLength, trimMode, "...");
-        }
-
-
-        /// <summary>
-        /// If the length of this string exceeds the max, it will be trimmed according to the type specified.
-        /// </summary>
-        /// <param name="value">The value to be truncated.</param>
-        /// <param name="maxLength">The max length of the string.</param>
-        /// <param name="trimming"></param>
-        /// <param name="ellipsis"></param>
-        /// <returns></returns>
-        public static string Truncate(this string value, int maxLength, StringTruncating trimming, string ellipsis)
-        {
-            if (string.IsNullOrEmpty(value))
-                return value;
-            //trim
-            if (maxLength > 0 && value.Length > maxLength)
+            return elements.Join(separatorIndex =>
             {
-                if (ellipsis == null)
-                    ellipsis = "...";
-                switch (trimming)
+                if (elements.Length == 2)
+                    return separatorForTwoElements;
+                if (separatorIndex < elements.Length - 2)
+                    return finalSeparator;
+                return separator;
+            });
+        }
+
+
+        /// <summary>
+        /// Shortcut for string.Join(string.Empty,values).  Instead you just write values.Join().  
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public static string Join(this IEnumerable<string> values)
+        {
+            return values.Join(string.Empty);
+        }
+
+        /// <summary>
+        /// Shortcut for string.Join(separator,values).  Instead you just write values.Join(separator).  
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public static string Join(this IEnumerable<string> values, string separator)
+        {
+            return string.Join(separator, values.ToArray());
+        }
+
+        /// <summary>
+        /// Like String.Join but includes the ability to include custom separators.  It is useful for assembling lists like "Me, Myself, and I"
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="separator">Function that recieves the current index of the string in the list of values.  Returns the separator.</param>
+        /// <returns></returns>
+        public static string Join(this IEnumerable<string> values, Func<int, string> separator)
+        {
+            if (values == null)
+                return null;
+
+            StringBuilder sb = null;
+            values.Each((str, index) =>
+            {
+                if (sb == null)
+                    sb = new StringBuilder();
+                else if (separator != null)
                 {
-                    case StringTruncating.Character:
-                        value = value.Substring(0, maxLength);
-                        break;
-                    case StringTruncating.EllipsisCharacter:
-                        value = value.Substring(0, maxLength) + ellipsis;
-
-                        break;
-                    case StringTruncating.EllipsisCenter:
-                        //get the substrings and put the ellipsis between them
-                        int endLength = maxLength/2;
-                        int beginningLength = maxLength - endLength;
-                            //number to take from beginnning.  this is not trimlength/2 because trimlength may be odd
-
-                        value = value.Substring(0, beginningLength) + ellipsis +
-                                value.Substring(value.Length - endLength);
-                        break;
-                    case StringTruncating.EllipsisWord:
-                        int nearestWordIndex = value.FindWordBreak(maxLength);
-                        //no nearest word, so just leave the value
-                        if (nearestWordIndex >= 0) value = value.Substring(0, nearestWordIndex) + ellipsis;
-                        break;
-                    case StringTruncating.Word:
-                        nearestWordIndex = value.FindWordBreak(maxLength);
-                        //no nearest word, so just leave the value
-                        if (nearestWordIndex >= 0) value = value.Substring(0, nearestWordIndex);
-                        break;
-                    default:
-                        throw new InvalidEnumArgumentException("Invalid TrimMode value.");
+                    string strSeparator = separator(index);
+                    if (strSeparator != null)
+                        sb.Append(strSeparator);
                 }
-            }
+                sb.Append(str);
+            });
 
-            return value;
+            return sb == null ? null : sb.ToString();
         }
 
 
         /// <summary>
-        /// Gets the index of the space before the closest word in the string from searchStartIndex.  
+        /// Takes this string and joins it with the other one, separated by the given separator.  It will guarantee that the separator only occurs once, even if this string ends with it and the other starts wtih it already.  This is useful in things like combining relative folders paths.
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="searchStartIndex"></param>
+        /// <param name="separator"></param>
+        /// <param name="otherValue"></param>
         /// <returns></returns>
-        /// <remarks>
-        /// </remarks>
-        private static int FindWordBreak(this string value, int searchStartIndex)
+        public static string SeparatedBy(this string value, string separator, string otherValue)
         {
-            if (value == null)
-                return -1;
-            //todo: not all cultures use word break, but I couldn't find a framework method to handle it
-            int nextWordStart = value.IndexOf(' ', searchStartIndex);
-                //gets the position of the next space from searchStartIndex
-            int previousWordStart = value.Substring(0, searchStartIndex).LastIndexOf(' ');
-                //gets the position of the first previous space from searchStartIndex
-
-            //no spaces were found, so return the value's length
-            if (nextWordStart < 0 && previousWordStart < 0)
-                return -1;
-
-            if (nextWordStart < 0)
-                return previousWordStart;
-            if (previousWordStart < 0)
-                return nextWordStart;
-
-            //the next word starts further from the start index as the previous word, so previous word is closest
-            if ((nextWordStart - searchStartIndex) > (searchStartIndex - previousWordStart))
-            {
-                return previousWordStart;
-            }
-            return nextWordStart;
+            return value.EndWithout(separator) + otherValue.StartWith(separator);
         }
+
+        /// <summary>
+        /// Repeats a certain string x number of times.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="times"></param>
+        /// <returns></returns>
+        public static string Repeat(this string value)
+        {
+            return Repeat(value, 1);
+        }
+
+        /// <summary>
+        /// Repeats a certain string x number of times.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="times"></param>
+        /// <returns></returns>
+        public static string Repeat(this string value, int times)
+        {
+            if (times < 0)
+                throw new ArgumentOutOfRangeException("times", "times cannot be less than 1");
+            if (times == 0 || string.IsNullOrEmpty(value))
+                return value;
+
+            string[] repetitions = new string[times + 1];
+            for (var i = 0; i <= times; i++)
+            {
+                repetitions[i] = value;
+            }
+            return string.Join(string.Empty, repetitions);
+        }
+
+        #endregion
+
+        #region Hashing
 
         /// <summary>
         /// Generates a one-way hash for this plain text value with the key (a secret key) provided and returns a base64-encoded result.  Uses the system's default hash algorithm,  which in testing was shown to be HMACSHA1 (this will vary though).
@@ -959,6 +1272,19 @@ namespace System
             return Convert.ToBase64String(hashed);
         }
 
+        /// <summary>
+        /// Creates an MD5 hash, which is used across many platforms and is helpful for things like verifying a signature of an http request.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string HashMd5(string input)
+        {
+            using (var md5Provider = new MD5CryptoServiceProvider())
+            {
+                return string.Join(string.Empty, md5Provider.ComputeHash(Encoding.UTF8.GetBytes(input)).Select(b => b.ToString("x2").ToLowerInvariant()).ToArray());
+            }
+        }
+
 
         /// <summary>
         /// Checks whether this string, which should plain text and not hashed, matches the version provided that has previously been hashed (preferrably through the Hash method).
@@ -971,88 +1297,75 @@ namespace System
         public static bool MatchesHash(this string plainText, string hasedValue, string hashKey, string hashAlgorithm)
         {
             string hashed = plainText.Hash(hashKey, hashAlgorithm);
-            return hashed.EqualsExact(hasedValue);
+            return hashed.Equals(hasedValue, StringComparison.Ordinal);
         }
 
+        #endregion
 
         /// <summary>
-        /// Assembles a list in the standard English style, like "one, two, and three" or "one and two"
-        /// </summary>
-        /// <param name="elements">The string elements to include in the list.</param>
-        /// <returns></returns>
-        /// <example>Passing in {"1","2","3"} will return "1, 2, and 3".</example>
-        public static string AssembleList(this string[] elements)
-        {
-            return AssembleList(elements, ", ", ", and ", " and ");
-        }
-
-
-        /// <summary>
-        /// Assembles a list with specified elemets and separators.
-        /// </summary>
-        /// <param name="elements">The string elements to include in the list.</param>
-        /// <param name="separator">Separator between elements.</param>
-        /// <param name="finalSeparator">Separator between the last two elements.</param>
-        /// <param name="separatorForListOfTwo">Separator between elements if the list only has two elements.</param>
-        /// <returns></returns>
-        public static string AssembleList(this string[] elements, string separator, string finalSeparator,
-                                          string separatorForTwoElements)
-        {
-            //set the final and listoftwo separators
-            if (string.IsNullOrEmpty(finalSeparator)) finalSeparator = separator;
-            if (string.IsNullOrEmpty(separatorForTwoElements)) separatorForTwoElements = finalSeparator;
-
-            return elements.Join(separatorIndex =>
-                                     {
-                                         if (elements.Length == 2)
-                                             return separatorForTwoElements;
-                                         if (separatorIndex < elements.Length - 2)
-                                             return finalSeparator;
-                                         return separator;
-                                     });
-        }
-
-
-        /// <summary>
-        /// Like String.Join but includes the ability to include custom separators.  It is useful for assembling lists like "Me, Myself, and I"
-        /// </summary>
-        /// <param name="values"></param>
-        /// <param name="separator">Function that recieves the current index of the string in the list of values.  Returns the separator.</param>
-        /// <returns></returns>
-        public static string Join(this IEnumerable<string> values, Func<int, string> separator)
-        {
-            if (values == null)
-                return null;
-
-            StringBuilder sb = null;
-            values.Each((str, index) =>
-                            {
-                                if (sb == null)
-                                    sb = new StringBuilder();
-                                else if (separator != null)
-                                {
-                                    string strSeparator = separator(index);
-                                    if (strSeparator != null)
-                                        sb.Append(strSeparator);
-                                }
-                                sb.Append(str);
-                            });
-
-            return sb == null ? null : sb.ToString();
-        }
-
-
-        /// <summary>
-        /// Takes this string and joins it with the other one, separated by the given separator.  It will guarantee that the separator only occurs once, even if this string ends with it and the other starts wtih it already.  This is useful in things like combining relative folders paths.
+        /// Gets the index of the space before the closest word in the string from searchStartIndex.  
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="separator"></param>
-        /// <param name="otherValue"></param>
+        /// <param name="searchStartIndex"></param>
         /// <returns></returns>
-        public static string SeperatedBy(this string value, string separator, string otherValue)
+        /// <remarks>
+        /// </remarks>
+        private static int FindWordBreak(this string value, int searchStartIndex)
         {
-            return value.EndWithout(separator) + otherValue.StartWith(separator);
+            if (value == null)
+                return -1;
+            //todo: not all cultures use word break, but I couldn't find a framework method to handle it
+            int nextWordStart = value.IndexOf(' ', searchStartIndex);
+            //gets the position of the next space from searchStartIndex
+            int previousWordStart = value.Substring(0, searchStartIndex).LastIndexOf(' ');
+            //gets the position of the first previous space from searchStartIndex
+
+            //no spaces were found, so return the value's length
+            if (nextWordStart < 0 && previousWordStart < 0)
+                return -1;
+
+            if (nextWordStart < 0)
+                return previousWordStart;
+            if (previousWordStart < 0)
+                return nextWordStart;
+
+            //the next word starts further from the start index as the previous word, so previous word is closest
+            if ((nextWordStart - searchStartIndex) > (searchStartIndex - previousWordStart))
+            {
+                return previousWordStart;
+            }
+            return nextWordStart;
         }
+
+        /// <summary>
+        /// Gets the index within the string of X occurance of a given substring.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="substring"></param>
+        /// <param name="occuranceNumber">If 0 or less, this will indicate the last occurance.  Otherwise it specifies which # occurace.</param>
+        /// <param name="comparison"></param>
+        /// <returns></returns>
+        /// <remarks>This forms the basis for lots of the function, like Before and After.</remarks>
+        public static int IndexOfOccurance(this string source, string substring, int occuranceNumber, StringComparison comparison)
+        {
+            if (source == null || !substring.HasChars())
+                return -1;
+
+            var index = int.MinValue;
+            //check for last occurance
+            if (occuranceNumber <= 0)
+            {
+                return source.LastIndexOf(substring, comparison);
+            }
+            for (var i = 0; i < occuranceNumber; i++)
+            {
+                index = source.IndexOf(substring, i == 0 ? 0 : index + substring.Length, comparison);
+                if (index < 0)
+                    return -1;
+            }
+            return index;
+        }
+
 
         /// <summary>
         /// Takes the string and using TypeConverters, converts it to the given type.  A nice way to succinctly convert a string into any type.  
